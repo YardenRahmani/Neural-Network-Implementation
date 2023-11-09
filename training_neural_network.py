@@ -1,8 +1,6 @@
 import sys
 import numpy as np
 
-
-
 def read_data():
     input = []
     output = [] 
@@ -11,7 +9,6 @@ def read_data():
             line = list(map(float,line.strip().split()))
             input.append(line[:inputSize])
             output.append(line[inputSize:])
-       
     return np.array(input), np.array(output)
 
 def train_model():
@@ -22,25 +19,33 @@ def train_model():
     np.random.seed(0)
     W1 = np.random.randn(inputSize,HIDDEN_LAYER_SIZE)
     b1 = np.random.randn(1,HIDDEN_LAYER_SIZE)
-    W2 = np.random.randn(HIDDEN_LAYER_SIZE,outputSize)
-    b2 = np.random.randn(1, outputSize)
+    W2 = np.random.randn(HIDDEN_LAYER_SIZE,HIDDEN_LAYER_SIZE)
+    b2 = np.random.randn(1, HIDDEN_LAYER_SIZE)
+    W3 = np.random.randn(HIDDEN_LAYER_SIZE,outputSize)
+    b3 = np.random.randn(1, outputSize)
     for epoch in range(EPOCHES):
-        H = np.dot(X,W1) + b1
-        Y_pred = np.dot(H,W2) + b2
+        H1 = np.dot(X,W1) + b1
+        H2 = np.dot(H1,W2) + b2
+        Y_pred = np.dot(H2,W3) + b3
         error = Y_pred - Y
         MSE = np.mean(error**2)
-        gradMSE2out = 2*error ## dL/dy = 2*error
         #print(f"MSE: {MSE}")
-        gradMSE2W2 = np.dot(H.T, gradMSE2out) / SAMPLES ## dL/dw2 = (dL/dy)(dy/dW2) = (dL/dy)H
-        gradMSE2b2 = np.mean(gradMSE2out) ## dL/db2 = (dL/dy)(dy/b2) = dL/dy
-        gradMSE2H = np.dot(gradMSE2out, W2.T) / SAMPLES ## dL/dH = (dL/dy)(dy/dH) = (dL/dy)W2
-        dW1 = np.dot(X.T, gradMSE2H) / SAMPLES ## dL/dW1 = (dL/dH)(dH/dW1) = (dL/dH)X
-        db1 = np.mean(gradMSE2H) ## dL/db1 = (dL/dH)(dH/db1) = dL/dH
+        gradMSE2out = 2*error ## dL/dy = 2*error
+        gradMSE2W3 = np.dot(H2.T, gradMSE2out) / SAMPLES ## dL/dw3 = (dL/dy)(dy/dW3) = (dL/dy)H2
+        gradMSE2b3 = np.mean(gradMSE2out) ## dL/db3 = (dL/dy)(dy/b3) = dL/dy
+        gradMSE2H2 = np.dot(gradMSE2out, W3.T) / SAMPLES ## dL/dH2 = (dL/dy)(dy/dH2) = (dL/dy)W3
+        gradMSE2W2 = np.dot(H1.T, gradMSE2H2) / SAMPLES## dL/dW2 = (dL/dH2)(dH2/dW2) = (dL/dH2)H1
+        gradMSE2b2 = np.mean(gradMSE2H2) ## dL/db2 = (dL/dH2)(dH2/db2) = dL/dH2
+        gradMSE2H1 = np.dot(gradMSE2H2, W2.T) / SAMPLES ## dL/dH1 = (dL/dH2)(dH2/dH1) = (dL/dH2)W2
+        gradMSE2W1 = np.dot(X.T, gradMSE2H1) / SAMPLES ## dL/dW1 = (dL/dH1)(dH1/dW1) = (dL/dH)X
+        gradMSE2b1 = np.mean(gradMSE2H1) ## dL/db1 = (dL/dH)(dH/db1) = dL/dH
+        W3 -= LEARNING_RATE * gradMSE2W3
+        b3 -= LEARNING_RATE * gradMSE2b3
         W2 -= LEARNING_RATE * gradMSE2W2
         b2 -= LEARNING_RATE * gradMSE2b2
-        W1 -= LEARNING_RATE * dW1
-        b1 -= LEARNING_RATE * db1
-        if MSE < 1e-07:
+        W1 -= LEARNING_RATE * gradMSE2W1
+        b1 -= LEARNING_RATE * gradMSE2b1
+        if MSE < 1e-05:
             print(f"after {epoch + 1} iterations: MSE = {MSE}")
             break
 
