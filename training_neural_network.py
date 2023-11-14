@@ -13,15 +13,14 @@ def read_data(file_name, input_size, output_size):
             output_data.append(line[input_size:])
     return np.array(input_data), np.array(output_data), True
 
-def initialize_weights(input_size, output_size, hidden_layer_size):
+def initialize_weights(layers):
+    weights = []
+    biases = []
     np.random.seed(0)
-    W1 = np.random.randn(input_size,hidden_layer_size)
-    b1 = np.random.randn(1,hidden_layer_size)
-    W2 = np.random.randn(hidden_layer_size,hidden_layer_size)
-    b2 = np.random.randn(1, hidden_layer_size)
-    W3 = np.random.randn(hidden_layer_size,output_size)
-    b3 = np.random.randn(1, output_size)
-    return [W1, W2, W3], [b1, b2, b3]
+    for cur_layer in range(len(layers) - 1):
+        weights.append(np.random.randn(layers[cur_layer],layers[cur_layer + 1]))
+        biases.append(np.random.randn(1,layers[cur_layer + 1]))
+    return weights, biases
 
 def feedforward(weights, biases):
     H1 = np.dot(X,weights[0]) + biases[0]
@@ -52,8 +51,8 @@ def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
     biases[2] -= learning_rate * delta_b[2]
     return weights, biases
 
-def train_model(X, Y, learning_rate,  hidden_layer_size, epochs):
-    weights, biases = initialize_weights(X.shape[1], Y.shape[1], hidden_layer_size)
+def train_model(X, Y, learning_rate,  hidden_layers, epochs):
+    weights, biases = initialize_weights([X.shape[1]] + hidden_layers + [Y.shape[1]])
     for epoch in range(epochs):
         H1, H2, Y_pred = feedforward(weights, biases)
         error = Y_pred - Y
@@ -73,6 +72,6 @@ if __name__ == "__main__":
         print("Bad data file")
     else:
         learning_rate = float(sys.argv[4])
-        hidden_layer_size = int(sys.argv[5])
+        hidden_layers = list(map(int, list(sys.argv[5][1:-1].split(','))))
         epochs = int(sys.argv[6])
-        train_model(X, Y, learning_rate, hidden_layer_size, epochs)
+        train_model(X, Y, learning_rate, hidden_layers, epochs)

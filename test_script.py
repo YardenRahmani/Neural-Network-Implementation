@@ -3,7 +3,7 @@ import os
 import random
 
 LEARNING_RATE = 0.001
-HIDDEN_LAYER_SIZE = 5
+HIDDEN_LAYER_SIZE = [5,8]
 SAMPLES = 1000
 EPOCHES = 10000
 consts = [str(LEARNING_RATE), str(HIDDEN_LAYER_SIZE), str(EPOCHES)]
@@ -16,7 +16,7 @@ def generate_data(testNum):
         elif testNum == 2:
             inputSize = 2
         outputSize = 1
-        for i in range(SAMPLES):
+        for _ in range(SAMPLES):
             x1 = 5*random.random()
             if testNum == 1:
                 dataFile.write(f"{x1} {1.5*x1}\n")
@@ -43,7 +43,6 @@ args = generate_data(cur_test)
 cmdLine = ["python3", "training_neural_network.py"] + args + consts
 process = subprocess.run(cmdLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 print(f"error in test 1\n{process.stderr}") if process.returncode != 0 else print(process.stdout)
-    
 
 # test 2
 cur_test += 1
