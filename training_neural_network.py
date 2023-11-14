@@ -21,35 +21,48 @@ def initialize_weights(input_size, output_size, hidden_layer_size):
     b2 = np.random.randn(1, hidden_layer_size)
     W3 = np.random.randn(hidden_layer_size,output_size)
     b3 = np.random.randn(1, output_size)
-    return W1, W2, W3, b1, b2, b3
+    return [W1, W2, W3], [b1, b2, b3]
 
-def train_model(X, Y, learning_rate,  hidden_layer_size, samples, epochs):
-    W1, W2, W3, b1, b2, b3 = initialize_weights(X.shape[1], Y.shape[1], hidden_layer_size)
+def feedforward(weights, biases):
+    H1 = np.dot(X,weights[0]) + biases[0]
+    H2 = np.dot(H1,weights[1]) + biases[1]
+    Y_pred = np.dot(H2,weights[2]) + biases[2]
+    return H1, H2, Y_pred
+
+def backpropagate(X, H1, H2, weights, error):
+    samples = X.shape[0]
+    #print(f"MSE: {MSE}")
+    grad_MSE_2_out = 2*error ## dL/dy = 2*error
+    grad_MSE_2_W3 = np.dot(H2.T, grad_MSE_2_out) / samples ## dL/dw3 = (dL/dy)(dy/dW3) = (dL/dy)H2
+    grad_MSE_2_b3 = np.mean(grad_MSE_2_out) ## dL/db3 = (dL/dy)(dy/b3) = dL/dy
+    grad_MSE_2_H2 = np.dot(grad_MSE_2_out, weights[2].T) / samples ## dL/dH2 = (dL/dy)(dy/dH2) = (dL/dy)W3
+    grad_MSE_2_W2 = np.dot(H1.T, grad_MSE_2_H2) / samples## dL/dW2 = (dL/dH2)(dH2/dW2) = (dL/dH2)H1
+    grad_MSE_2_b2 = np.mean(grad_MSE_2_H2) ## dL/db2 = (dL/dH2)(dH2/db2) = dL/dH2
+    grad_MSE_2_H1 = np.dot(grad_MSE_2_H2, weights[1].T) / samples ## dL/dH1 = (dL/dH2)(dH2/dH1) = (dL/dH2)W2
+    grad_MSE_2_W1 = np.dot(X.T, grad_MSE_2_H1) / samples ## dL/dW1 = (dL/dH1)(dH1/dW1) = (dL/dH)X
+    grad_MSE_2_b1 = np.mean(grad_MSE_2_H1) ## dL/db1 = (dL/dH)(dH/db1) = dL/dH
+    return [grad_MSE_2_W1, grad_MSE_2_W2, grad_MSE_2_W3], [grad_MSE_2_b1, grad_MSE_2_b2, grad_MSE_2_b3]
+
+def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
+    weights[0] -= learning_rate * delta_w[0]
+    weights[1] -= learning_rate * delta_w[1]
+    weights[2] -= learning_rate * delta_w[2]
+    biases[0] -= learning_rate * delta_b[0]
+    biases[1] -= learning_rate * delta_b[1]
+    biases[2] -= learning_rate * delta_b[2]
+    return weights, biases
+
+def train_model(X, Y, learning_rate,  hidden_layer_size, epochs):
+    weights, biases = initialize_weights(X.shape[1], Y.shape[1], hidden_layer_size)
     for epoch in range(epochs):
-        H1 = np.dot(X,W1) + b1
-        H2 = np.dot(H1,W2) + b2
-        Y_pred = np.dot(H2,W3) + b3
+        H1, H2, Y_pred = feedforward(weights, biases)
         error = Y_pred - Y
         MSE = np.mean(error**2)
-        #print(f"MSE: {MSE}")
-        gradMSE2out = 2*error ## dL/dy = 2*error
-        gradMSE2W3 = np.dot(H2.T, gradMSE2out) / samples ## dL/dw3 = (dL/dy)(dy/dW3) = (dL/dy)H2
-        gradMSE2b3 = np.mean(gradMSE2out) ## dL/db3 = (dL/dy)(dy/b3) = dL/dy
-        gradMSE2H2 = np.dot(gradMSE2out, W3.T) / samples ## dL/dH2 = (dL/dy)(dy/dH2) = (dL/dy)W3
-        gradMSE2W2 = np.dot(H1.T, gradMSE2H2) / samples## dL/dW2 = (dL/dH2)(dH2/dW2) = (dL/dH2)H1
-        gradMSE2b2 = np.mean(gradMSE2H2) ## dL/db2 = (dL/dH2)(dH2/db2) = dL/dH2
-        gradMSE2H1 = np.dot(gradMSE2H2, W2.T) / samples ## dL/dH1 = (dL/dH2)(dH2/dH1) = (dL/dH2)W2
-        gradMSE2W1 = np.dot(X.T, gradMSE2H1) / samples ## dL/dW1 = (dL/dH1)(dH1/dW1) = (dL/dH)X
-        gradMSE2b1 = np.mean(gradMSE2H1) ## dL/db1 = (dL/dH)(dH/db1) = dL/dH
-        W3 -= learning_rate * gradMSE2W3
-        b3 -= learning_rate * gradMSE2b3
-        W2 -= learning_rate * gradMSE2W2
-        b2 -= learning_rate * gradMSE2b2
-        W1 -= learning_rate * gradMSE2W1
-        b1 -= learning_rate * gradMSE2b1
         if MSE < 1e-05:
             print(f"after {epoch + 1} iterations: MSE = {MSE}")
             break
+        delta_w, delta_b = backpropagate(X, H1, H2, weights, error)
+        weights, biases = gradient_descent(weights, biases, delta_w, delta_b, learning_rate)
 
 if __name__ == "__main__":
     file_name = sys.argv[1]
@@ -61,7 +74,5 @@ if __name__ == "__main__":
     else:
         learning_rate = float(sys.argv[4])
         hidden_layer_size = int(sys.argv[5])
-        samples = int(sys.argv[6])
-        epochs = int(sys.argv[7])
-        print(X.shape[1])
-        train_model(X, Y, learning_rate, hidden_layer_size, samples, epochs)
+        epochs = int(sys.argv[6])
+        train_model(X, Y, learning_rate, hidden_layer_size, epochs)

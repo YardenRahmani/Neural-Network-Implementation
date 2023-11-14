@@ -6,7 +6,7 @@ LEARNING_RATE = 0.001
 HIDDEN_LAYER_SIZE = 5
 SAMPLES = 1000
 EPOCHES = 10000
-consts = [str(LEARNING_RATE), str(HIDDEN_LAYER_SIZE), str(SAMPLES), str(EPOCHES)]
+consts = [str(LEARNING_RATE), str(HIDDEN_LAYER_SIZE), str(EPOCHES)]
 
 def generate_data(testNum):
     fileName = "data" + str(testNum)
