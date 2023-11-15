@@ -1,6 +1,14 @@
 import sys
 import numpy as np
 
+def activation(x):
+    return np.maximum(0, x)
+    #return x
+
+def activation_derivative(x):
+    return np.where(x > 0, 1, 0)
+    #return 1
+
 def read_data(file_name, input_size, output_size):
     input_data = []
     output_data = []
@@ -22,25 +30,31 @@ def initialize_weights(layers_sizes):
         biases.append(np.random.randn(1,layers_sizes[cur_layer + 1]))
     return weights, biases
 
-def feedforward(weights, biases):
-    layers_nodes = [X]
+def feedforward(X, weights, biases):
+    layers_nodes_pre = []
+    layer_nodes = [X]
     for layer in range(len(weights)):
-        layers_nodes.append(np.dot(layers_nodes[layer],weights[layer]) + biases[layer])
-    return layers_nodes
+        layers_nodes_pre.append(np.dot(layer_nodes[layer],weights[layer]) + biases[layer])
+        layer_nodes.append(activation(layers_nodes_pre[layer]))
+    return layers_nodes_pre, layer_nodes
 
-def backpropagate(layers_nodes_rev, weights_rev, error):
+def backpropagate(layers_nodes_pre_rev, layers_nodes_rev, weights_rev, error):
+    ## X--(w0+b0)--G0--(f)--H0--(W1+b1)--G1--(f)-...-Y
+    #print(f"MSE: {np.mean(error**2)}")
     samples = X.shape[0]
     grad_MSE_2_weights_rev = []
     grad_MSE_2_biases_rev = []
+    grad_MSE_2_pre_layer_rev = []
     grad_MSE_2_layer_rev = [2*error] ## dL/dy = 2*error
-    #print(f"MSE: {MSE}")
     for layer in range(len(weights_rev)):
-        ## dL/dwi = (dL/dHi)(dHi/dwi) = Hi-1*(dL/dHi)
-        grad_MSE_2_weights_rev.append(np.dot(layers_nodes_rev[layer+1].T, grad_MSE_2_layer_rev[layer])/samples)
-        ## dL/dbi = (dL/dHi)(dHi/dbi) = dL/dHi
-        grad_MSE_2_biases_rev.append(np.mean(grad_MSE_2_layer_rev[layer]))
-        ## dL/dHi-1 = (dL/Hi)(dHi/dHi-1) = (dL/dHi)Wi
-        grad_MSE_2_layer_rev.append(np.dot(grad_MSE_2_layer_rev[layer],weights_rev[layer].T)/samples)
+        ## dL/dGi = (dL/dHi)(dHi/dGi) = (dL/dHi)*relu_deriv(Gi)
+        grad_MSE_2_pre_layer_rev.append(activation_derivative(layers_nodes_pre_rev[layer])*grad_MSE_2_layer_rev[layer])
+        ## dL/dwi = (dL/dGi)(dGi/dwi) = (dL/dGi)*Hi-1
+        grad_MSE_2_weights_rev.append(np.dot(layers_nodes_rev[layer+1].T, grad_MSE_2_pre_layer_rev[layer])/samples)
+        ## dL/dbi = (dL/dGi)(dGi/dbi) = dL/dGi
+        grad_MSE_2_biases_rev.append(np.mean(grad_MSE_2_pre_layer_rev[layer]))
+        ## dL/dHi-1 = (dL/Gi)(dGi/dHi-1) = (dL/dGi)Wi
+        grad_MSE_2_layer_rev.append(np.dot(grad_MSE_2_pre_layer_rev[layer],weights_rev[layer].T)/samples)
     return list(reversed(grad_MSE_2_weights_rev)), list(reversed(grad_MSE_2_biases_rev))
 
 def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
@@ -51,10 +65,10 @@ def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
 def train_model(X, Y, learning_rate,  hidden_layers_sizes, epochs):
     weights, biases = initialize_weights([X.shape[1]] + hidden_layers_sizes + [Y.shape[1]])
     for epoch in range(epochs):
-        layers_nodes = feedforward(weights, biases)
-        error = layers_nodes[-1] - Y
+        layers_nodes_pre, layer_nodes = feedforward(X, weights, biases)
+        error = layer_nodes[-1] - Y
         MSE = np.mean(error**2)
-        delta_w, delta_b = backpropagate(list(reversed(layers_nodes)), list(reversed(weights)), error)
+        delta_w, delta_b = backpropagate(list(reversed(layers_nodes_pre)), list(reversed(layer_nodes)), list(reversed(weights)), error)
         weights, biases = gradient_descent(weights, biases, delta_w, delta_b, learning_rate)
     return MSE
 
