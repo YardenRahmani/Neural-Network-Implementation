@@ -17,4 +17,4 @@ The project entails the training of a flexible multi-layer neural network, featu
 This Python script serves as the core of the project, implementing the training process for a neural network.
 
 - test_script:
-A Python script designed for testing the training_neural_network script with different datasets and parameters.
+A Python script designed for testing the training_neural_network script with different datasets and parameters, and test for the learning rate for each dataset which gives the lowest error.

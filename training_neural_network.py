@@ -80,8 +80,8 @@ if __name__ == "__main__":
     if valid == False:
         print("Bad data file")
     else:
-        learning_rate = float(sys.argv[4])
-        hidden_layers_sizes = list(map(int, list(sys.argv[5][1:-1].split(','))))
-        epochs = int(sys.argv[6])
+        epochs = int(sys.argv[4])
+        learning_rate = float(sys.argv[5])
+        hidden_layers_sizes = list(map(int, list(sys.argv[6][1:-1].split(','))))
         final_error = train_model(X, Y, learning_rate, hidden_layers_sizes, epochs)
         print(f"Final error is {final_error}")

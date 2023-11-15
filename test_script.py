@@ -2,11 +2,10 @@ import subprocess
 import os
 import random
 
-LEARNING_RATE = 0.0001
+LEARNING_RATES = [pow(10, -x) for x in range(5)]
 HIDDEN_LAYER_SIZE = [8,4]
 SAMPLES = 1000
-EPOCHES = 10000
-consts = [str(LEARNING_RATE), str(HIDDEN_LAYER_SIZE), str(EPOCHES)]
+EPOCHES = 1000
 
 def generate_data(testNum):
     fileName = "data" + str(testNum)
@@ -44,8 +43,16 @@ def clear_data(test_num):
 for cur_test in range(1,5):
     print(f"test {cur_test}")
     args = generate_data(cur_test)
-    cmdLine = ["python3", "training_neural_network.py"] + args + consts
-    process = subprocess.run(cmdLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    print(f"error in test 1\n{process.stderr}") if process.returncode != 0 else print(process.stdout)
-#print(process.stdout)
+    cmd_line = ["python3", "training_neural_network.py"] + args + [str(EPOCHES)]
+    min_error = float('inf')
+    for learning_rate in LEARNING_RATES:
+        cur_cmd = cmd_line + [str(learning_rate), str(HIDDEN_LAYER_SIZE)]
+        process = subprocess.run(cur_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        print(f"error in test 1\n{process.stderr}") if process.returncode != 0 else None
+        cur_error = float(process.stdout.split()[-1])
+        if cur_error < min_error:
+            best_rate = learning_rate
+            min_error = cur_error
+    print(f"Best learning rate is {best_rate} with error {min_error}") if min_error != float('inf') else None
+
 clear_data(cur_test)
