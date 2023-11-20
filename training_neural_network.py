@@ -9,10 +9,10 @@ def activation_derivative(x):
     return np.where(x > 0, 1, 0)
     #return 1
 
-def read_data(file_name, input_size, output_size):
+def read_data(training_file_name, input_size, output_size):
     input_data = []
     output_data = []
-    with open(file_name, "r") as dataFile:
+    with open(training_file_name, "r") as dataFile:
         for line in dataFile.readlines():
             line = list(map(float,line.strip().split()))
             if len(line) != input_size + output_size:
@@ -70,18 +70,25 @@ def train_model(X, Y, learning_rate,  hidden_layers_sizes, epochs):
         MSE = np.mean(error**2)
         delta_w, delta_b = backpropagate(list(reversed(layers_nodes_pre)), list(reversed(layer_nodes)), list(reversed(weights)), error)
         weights, biases = gradient_descent(weights, biases, delta_w, delta_b, learning_rate)
-    return MSE
+    return MSE, weights, biases
 
 if __name__ == "__main__":
-    file_name = sys.argv[1]
-    input_size = int(sys.argv[2])
-    output_size = int(sys.argv[3])
-    X, Y, valid = read_data(file_name, input_size, output_size)
+    training_file_name = sys.argv[1]
+    test_file_name = sys.argv[2]
+    input_size = int(sys.argv[3])
+    output_size = int(sys.argv[4])
+    X, Y, valid = read_data(training_file_name, input_size, output_size)
     if valid == False:
-        print("Bad data file")
+        print("Bad training data file")
     else:
-        epochs = int(sys.argv[4])
-        learning_rate = float(sys.argv[5])
-        hidden_layers_sizes = list(map(int, list(sys.argv[6][1:-1].split(','))))
-        final_error = train_model(X, Y, learning_rate, hidden_layers_sizes, epochs)
-        print(f"Final error is {final_error}")
+        epochs = int(sys.argv[5])
+        learning_rate = float(sys.argv[6])
+        hidden_layers_sizes = list(map(int, list(sys.argv[7][1:-1].split(','))))
+        _, weights, biases = train_model(X, Y, learning_rate, hidden_layers_sizes, epochs)
+        X_test, Y_test, valid = read_data(test_file_name, input_size, output_size)
+        if valid == False:
+            print("Bad testing data file")
+        else:
+            _, layer_nodes = feedforward(X_test, weights, biases)
+            final_error = layer_nodes[-1] - Y_test
+            print(f"Final error is {abs(np.mean(final_error))}")
