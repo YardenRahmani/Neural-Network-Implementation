@@ -1,12 +1,16 @@
 import subprocess
 import os
 import random
+from itertools import product
 
 LEARNING_RATES = [pow(10, -x) for x in range(5)]
-HIDDEN_LAYER_SIZE = [8,4]
+SIZES_RANGE = range(4,13,4)
+HIDDEN_LAYER_SIZES = [[x] for x in SIZES_RANGE] + list(product(SIZES_RANGE,SIZES_RANGE))
+HIDDEN_LAYER_SIZES += list(product(SIZES_RANGE,SIZES_RANGE,SIZES_RANGE))
 SAMPLES = 1000
-SAMPLES_RANGE = 10
-EPOCHES = 1000
+SAMPLES_RANGE = 100
+EPOCHES = 100
+BATCHES = 1
 
 def generate_data(testNum):
     fileName = "data" + str(testNum)
@@ -17,16 +21,16 @@ def generate_data(testNum):
             inputSize = 2
         outputSize = 1
         for _ in range(SAMPLES):
-            x1 = (SAMPLES_RANGE/2)*random.random() - 2.5
+            x1 = SAMPLES_RANGE*(random.random() - 0.5)
             if testNum == 1:
                 dataFile.write(f"{x1} {1.5*x1}\n")
             elif testNum == 2:
-                x2 = (SAMPLES_RANGE/2)*random.random() - 2.5
+                x2 = SAMPLES_RANGE*(random.random() - 0.5)
                 dataFile.write(f"{x1} {x2} {3*x1 + 2*x2 + 5}\n")
             elif testNum == 3:
                 dataFile.write(f"{x1} {x1**2}\n")
             elif testNum == 4:
-                x2 = (SAMPLES_RANGE/2)*random.random() - 2.5
+                x2 = SAMPLES_RANGE*(random.random() - 0.5)
                 dataFile.write(f"{x1} {x2} {5*x1+2*x2**2}\n")
         return [fileName, inputSize, outputSize]
 
@@ -46,17 +50,22 @@ for cur_test in range(1,5):
     training_set, inputSize, outputSize = generate_data(cur_test)
     #validation_set, _, _ = generate_data(cur_test)
     test_set, _, _ = generate_data(cur_test)
-    cmd_line = ["python3", "training_neural_network.py", training_set, test_set, str(inputSize), str(outputSize), str(EPOCHES)]
+    cmd_line = ["python3", "training_neural_network.py", training_set, test_set, str(inputSize), str(outputSize), str(EPOCHES), str(BATCHES)]
     min_error = float('inf')
     for learning_rate in LEARNING_RATES:
-        cur_cmd = cmd_line + [str(learning_rate), str(HIDDEN_LAYER_SIZE)]
-        process = subprocess.run(cur_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        print(f"error in test 1\n{process.stderr}") if process.returncode != 0 else None
-        cur_error = float(process.stdout.split()[-1])
-        if cur_error < min_error:
-            best_rate = learning_rate
-            min_error = cur_error
+        for layers in HIDDEN_LAYER_SIZES:
+            cur_cmd = cmd_line + [str(learning_rate), str(layers)]
+            process = subprocess.run(cur_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            if process.returncode != 0:
+                print(f"error in test {cur_test}\n{process.stderr}")
+                exit()
+            else:
+                cur_error = float(process.stdout.split()[-1])
+                if cur_error < min_error:
+                    best_rate = learning_rate
+                    best_config = layers
+                    min_error = cur_error
     error_precent = 100*min_error/(SAMPLES_RANGE/2)
-    print(f"Best learning rate: {best_rate}, with mean error: {error_precent}%") if min_error != float('inf') else None
+    print(f"With learning rate of {best_rate} and layers size {layers}, the mean error is {error_precent:.3g}%") if min_error != float('inf') else None
 
 clear_data(cur_test)

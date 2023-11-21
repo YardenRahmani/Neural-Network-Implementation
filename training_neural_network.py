@@ -62,8 +62,7 @@ def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
     biases = [b - learning_rate * db for b, db in zip(biases, delta_b)]
     return weights, biases
 
-def train_model(X, Y, learning_rate,  hidden_layers_sizes, epochs):
-    weights, biases = initialize_weights([X.shape[1]] + hidden_layers_sizes + [Y.shape[1]])
+def train_model(X, Y, learning_rate,  weights, biases, epochs, batches):
     for epoch in range(epochs):
         layers_nodes_pre, layer_nodes = feedforward(X, weights, biases)
         error = layer_nodes[-1] - Y
@@ -82,9 +81,11 @@ if __name__ == "__main__":
         print("Bad training data file")
     else:
         epochs = int(sys.argv[5])
-        learning_rate = float(sys.argv[6])
-        hidden_layers_sizes = list(map(int, list(sys.argv[7][1:-1].split(','))))
-        _, weights, biases = train_model(X, Y, learning_rate, hidden_layers_sizes, epochs)
+        batches = int(sys.argv[6])
+        learning_rate = float(sys.argv[7])
+        hidden_layers_sizes = list(map(int, list(sys.argv[8][1:-1].split(','))))
+        weights, biases = initialize_weights([X.shape[1]] + hidden_layers_sizes + [Y.shape[1]])
+        _, weights, biases = train_model(X, Y, learning_rate, weights, biases, epochs, batches)
         X_test, Y_test, valid = read_data(test_file_name, input_size, output_size)
         if valid == False:
             print("Bad testing data file")
