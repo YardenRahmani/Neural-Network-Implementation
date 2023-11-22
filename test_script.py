@@ -3,7 +3,7 @@ import os
 import random
 from itertools import product
 
-LEARNING_RATES = [pow(10, -x) for x in range(5)]
+LEARNING_RATES = [pow(10, -x) for x in reversed(range(1,6))]
 SIZES_RANGE = range(4,13,8)
 HIDDEN_LAYER_SIZES = [[x] for x in SIZES_RANGE] + list(product(SIZES_RANGE,SIZES_RANGE))
 HIDDEN_LAYER_SIZES += list(product(SIZES_RANGE,SIZES_RANGE,SIZES_RANGE))

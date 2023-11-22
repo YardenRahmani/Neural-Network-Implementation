@@ -57,18 +57,22 @@ def backpropagate(layers_nodes_pre_rev, layers_nodes_rev, weights_rev, error):
         grad_MSE_2_layer_rev.append(np.dot(grad_MSE_2_pre_layer_rev[layer],weights_rev[layer].T)/samples)
     return list(reversed(grad_MSE_2_weights_rev)), list(reversed(grad_MSE_2_biases_rev))
 
-def gradient_descent(weights, biases, delta_w, delta_b, learning_rate):
-    weights = [w - learning_rate * dw for w, dw in zip(weights, delta_w)]
-    biases = [b - learning_rate * db for b, db in zip(biases, delta_b)]
-    return weights, biases
+def gradient_descent(weights, biases, delta_w, delta_b, learning_rate,velocity_w,velocity_b):
+    velocity_w = [0.9*velocity_w[i] + delta_w[i] for i in range(len(velocity_w))]
+    velocity_b = [0.9*velocity_b[i] + delta_b[i] for i in range(len(velocity_b))]
+    weights = [w - learning_rate * dw for w, dw in zip(weights, velocity_w)]
+    biases = [b - learning_rate * db for b, db in zip(biases, velocity_b)]
+    return weights, biases, velocity_w, velocity_b
 
 def train_model(X, Y, learning_rate,  weights, biases, epochs, batches):
+    velocity_w = [np.zeros(weights[i].shape) for i in range(len(weights))]
+    velocity_b = [np.zeros(biases[i].shape) for i in range(len(biases))]
     for epoch in range(epochs):
         layers_nodes_pre, layer_nodes = feedforward(X, weights, biases)
         error = layer_nodes[-1] - Y
         MSE = np.mean(error**2)
         delta_w, delta_b = backpropagate(list(reversed(layers_nodes_pre)), list(reversed(layer_nodes)), list(reversed(weights)), error)
-        weights, biases = gradient_descent(weights, biases, delta_w, delta_b, learning_rate)
+        weights, biases, velocity_w, velocity_b = gradient_descent(weights, biases, delta_w, delta_b, learning_rate,velocity_w,velocity_b)
     return MSE, weights, biases
 
 if __name__ == "__main__":
